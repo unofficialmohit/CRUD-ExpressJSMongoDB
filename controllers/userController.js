@@ -1,53 +1,73 @@
-const userBase=require('../models/userBase');
-const getUsers=(req,res)=>{
-    res.status(200).send(
-        userBase
-    )
+const User=require('../models/userBase')
+const getUsers=async(req,res)=>{
+   
+    console.log(limit);
+    const data=await User.find({}).sort({id:1});
+    res.status(200).send(data)
+    //todo
+    // pagination
+    // normal lookup
+    // let lookup
 }
-const getUserById=(req,res)=>{
+const getUserById=async(req,res)=>{
     const id=req.params.id;
-    const indexToFind=userBase.indexOf(userBase.find((data)=>data.id==id))
-    if(indexToFind==-1){
+    const currentUser=await User.findOne({id})
+    if(currentUser==null){
         res.status(400).send({message:"USER NOT FOUND"});
     }
+    else{
     res.status(200).send(
-        userBase[indexToFind]
+        currentUser
     )
 }
-const createUser=(req,res)=>{
-    const {id,username,password,email}=req.body;
-    userBase.push({id:userBase.length+1,username,password,email})
-    res.json(userBase)
 }
-const deleteUser=(req,res)=>{
-    const id=req.params.id;
-const userToDelete=userBase.find((user)=>user.id==id);
-const indexToDelete=userBase.indexOf(userToDelete);
-if(indexToDelete==-1)
+
+const createUser=async(req,res)=>{
+    const {username,password,email,age}=req.body;
+    try{  
+    const currentCount=(await User.findOne({}).sort({id:-1}));
+    const newUser=new User({id:currentCount?.id+1||1,username,email,age,password});
+    await newUser.save();
+    console.log(currentCount)
+    }
+    catch(error){
+        return res.status(400).send({ message: error.message })
+    }
+   
+    res.json(await User.find({}).sort({id:1}));
+}
+const deleteUser=async(req,res)=>{
+const id=req.params.id;
+await User.deleteMany({id});
+res.json(await User.find({}).sort({id:1}));
+}
+const updateUser=async(req,res)=>{
+const id=req.params.id;
+
+// const currentUser=await User.findOneAndUpdate({id:id}, req.body,{new:true});
+
+const {username,email,password,age}=req.body;
+try{
+const currentUser=await User.findOne({id:id});
+if(currentUser)
 {
-    res.status(400).send({message:"User Not Found"})
+currentUser.age=age||currentUser.age;
+currentUser.username=username||currentUser.username;
+currentUser.email=email||currentUser.email;
+currentUser.password=password||currentUser.password;
+await currentUser.save();
 }
-userBase.splice(indexToDelete,1);
-res.json(userBase);
-}
-const updateUser=(req,res)=>{
-    const id=req.params.id;
-const {username,email,password}=req.body;
-const userToUpdate=userBase.find((user)=>user.id==id);
-const indexToUpdate=userBase.indexOf(userToUpdate);
-if(indexToUpdate==-1)
+else
 {
-    res.status(400).send({message:"User Not Found"})
+return res.status(400).send({ message: "User Not Found" });
 }
-const updatedUserData={
-    ...userBase[indexToUpdate],
-    username:username||userBase[indexToUpdate].username,
-    password:password||userBase[indexToUpdate].password,
-    email:email||userBase[indexToUpdate].email,
-    
 }
-userBase[indexToUpdate]=updatedUserData;
-res.json(userBase);
+catch(error){
+    return res.status(400).send({ message: error.message })
+}
+
+
+res.json(await User.find({}).sort({id:1}));
 }
 module.exports={
     getUsers,
