@@ -1,10 +1,22 @@
 const User=require('../models/userBase')
 const getUsers=async(req,res)=>{
-    
+    const limit=req.query.limit;
+    const page=req.query.page;
+    console.log(page,limit);
     const data=await User.find({}).sort({id:1});
+    if(page&&limit)
+    {
+        //  Pagination http://localhost:9000/users?page=6&limit=7
+        const startIndex=(limit*(page-1));
+        const endIndex=(limit*page)-1;
+        const filteredData=data.filter((data,index)=>index>=startIndex&&index<=endIndex);
+        res.status(200).send(filteredData)
+    }
+    else
+    { 
     res.status(200).send(data)
-
-    //  pagination
+    }
+   
     // normal lookup
     // let lookup
 }
