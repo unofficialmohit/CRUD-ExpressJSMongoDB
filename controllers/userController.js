@@ -1,11 +1,10 @@
 const User=require('../models/userBase')
 const getUsers=async(req,res)=>{
-   
-    console.log(limit);
+    
     const data=await User.find({}).sort({id:1});
     res.status(200).send(data)
-    //todo
-    // pagination
+
+    //  pagination
     // normal lookup
     // let lookup
 }
