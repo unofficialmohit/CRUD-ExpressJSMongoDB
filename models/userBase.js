@@ -13,5 +13,6 @@ const userSchema=new mongoose.Schema({
     },
     password:String
 })
-
+userSchema.index({username:'text',email:'text',password:'text'})
+// userSchema.index({'$**': 'text'});
 module.exports=mongoose.model("Users",userSchema);

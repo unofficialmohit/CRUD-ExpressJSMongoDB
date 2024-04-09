@@ -4,14 +4,59 @@ const getUsers=async(req,res)=>{
     const limit=parseInt(req.query.limit);
     const page=parseInt(req.query.page);
     const skip=limit*(page-1);
-    console.log(page,limit);
+    const search=req.query.search||"";
+    const pipeline=[
+        {
+            $skip:skip||0
+        },
+        {
+            $limit:limit||1000
+        },
+        {
+            $sort:{id:1}
+        }
+    ];
+
+    // console.log(await User.listIndexes());
+    // console.log(page,limit);
+
+
+    
+
+    //search using regex
+    if(req.query.search){
+    pipeline.unshift({
+        $match:{
+          $or:[
+                {
+                    'username':{$regex:search}
+                },
+                {   
+                    'password':{$regex:search}
+                },
+                {   
+                    'email':{$regex:search}
+                }
+            ]
+       }
+     })
+    
+    //search using $text // we use this when we have a lot of text to display
+    // pipeline.unshift({
+    //     $match:{
+    //       $text:{
+    //           $search:search
+    //       }
+    //    }
+    //  })
+    }
 
     //using aggregate
-    const data=await User.aggregate([{$skip:skip},{$limit:limit},{$sort:{id:1}}])
+    const data=await User.aggregate(pipeline)
     res.status(200).send(data);
 
     //using find()
-    // const data=await User.find({}).skip(skip).limit(limit).sort({id:1});
+    // const data=await User.find({$text:{$search:search}}).skip(skip).limit(limit).sort({id:1});
     // res.status(200).send(data);
 
     //HardCoded Pagination //not recomended
@@ -28,6 +73,7 @@ const getUsers=async(req,res)=>{
     // res.status(200).send(data)
     // }
 }
+
 const getUserById=async(req,res)=>{
     const id=req.params.id;
     const currentUser=await User.findOne({id})
